@@ -10,6 +10,6 @@ binding = "ASSETS"
 # Bind Cloudflare KV namespace for user data storage
 # Note: You can create a KV namespace in the Cloudflare dashboard (Workers & Pages > KV)
 # and replace the id below with your own namespace ID.
-[[kv_namespaces]]
-binding = "SELF_ANALYSIS_KV"
-id = "YOUR_KV_NAMESPACE_ID_HERE"
+# [[kv_namespaces]]
+# binding = "SELF_ANALYSIS_KV"
+# id = "YOUR_KV_NAMESPACE_ID_HERE"
