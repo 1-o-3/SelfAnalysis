@@ -2,7 +2,7 @@
 
 function doGet() {
   return HtmlService.createTemplateFromFile('index').evaluate()
-      .setTitle('AIレポート生成スタンド')
+      .setTitle('自己分析ヘルパー')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 

@@ -521,7 +521,7 @@ window.addAndGenerate = async function() {
   renderThemeHistory();
   switchTab('tab-generate');
 
-  toggleLoader(true, "AIレポート生成スタンドが執筆中...");
+  toggleLoader(true, "自己分析ヘルパーが執筆中...");
 
   try {
     const response = await fetch('/api/generate-report', {
@@ -567,7 +567,7 @@ window.regenerate = async function(id) {
   report.isComparing = true;
   renderResults();
 
-  toggleLoader(true, "AIレポート生成スタンドが再執筆中...");
+  toggleLoader(true, "自己分析ヘルパーが再執筆中...");
 
   try {
     const response = await fetch('/api/generate-report', {

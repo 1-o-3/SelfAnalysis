@@ -1,6 +1,6 @@
-# SelfAnalysis (AIレポート生成スタンド)
+# SelfAnalysis (自己分析ヘルパー)
 
-Google Apps Script (GAS) で運用されていた「AIレポート生成スタンド」を、Cloudflare Pages および Vercel 等で安全に公開・共有できるように移植したスタンドアロン版Webアプリケーションです。
+Google Apps Script (GAS) で運用されていた「自己分析ヘルパー」を、Cloudflare Pages および Vercel 等で安全に公開・共有できるように移植したスタンドアロン版Webアプリケーションです。
 
 ---
 
