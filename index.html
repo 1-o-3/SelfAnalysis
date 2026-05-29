@@ -19,10 +19,8 @@
   <!-- Top Navigation Header -->
   <header class="app-header">
     <div class="app-logo">
-      <div class="logo-icon-glow">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-      </div>
-      <span class="app-title-text">自己分析ヘルパー</span>
+      <div class="logo-mark"></div>
+      <span class="app-title-text">自己分析<span class="bold-text">ヘルパー</span></span>
     </div>
     
     <!-- Custom Profile Editor / Google Login -->
@@ -59,10 +57,8 @@
   <!-- Login Wall Container (Visible when not logged in) -->
   <div id="login-wall" class="login-wall-container" style="display: none;">
     <div class="login-wall-card">
-      <div class="login-wall-logo">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-      </div>
-      <h2>自己分析ヘルパー</h2>
+      <div class="logo-mark" style="--logo-size: 56px; margin: 0 auto 1.5rem;"></div>
+      <h2>自己分析<span class="bold-text">ヘルパー</span></h2>
       <p>自己分析エピソードや設定を安全に保存し、AIレポート生成機能を利用するには、Googleアカウントでのログインが必要です。</p>
       
       <!-- Custom Client ID Input -->
@@ -96,11 +92,11 @@
         <div class="grid-2col">
           <div class="form-group">
             <label for="cfg-users">私の立場</label>
-            <input type="text" id="cfg-users" placeholder="例: 心理学専攻の大学生">
+            <input type="text" id="cfg-users" placeholder="例: 情報科学科の大学生（2005年生まれ）">
           </div>
           <div class="form-group">
             <label for="cfg-feature">自分に合う特徴</label>
-            <input type="text" id="cfg-feature" placeholder="例: 論理的思考力と観察眼">
+            <input type="text" id="cfg-feature" placeholder="例: プログラミングスキルと論理的アプローチ">
           </div>
         </div>
         
@@ -109,18 +105,6 @@
           <textarea id="cfg-prompt" rows="6" placeholder="AIの執筆スタイルを指定します..."></textarea>
         </div>
 
-        <div class="form-group">
-          <label>テーマカラー</label>
-          <div class="theme-color-picker">
-            <span class="color-dot active" id="dot-indigo" style="background-color: hsl(243, 75%, 59%);" onclick="selectThemeColor('indigo')" title="インディゴ"></span>
-            <span class="color-dot" id="dot-emerald" style="background-color: hsl(162, 70%, 40%);" onclick="selectThemeColor('emerald')" title="エメラルド"></span>
-            <span class="color-dot" id="dot-rose" style="background-color: hsl(336, 74%, 50%);" onclick="selectThemeColor('rose')" title="ローズ"></span>
-            <span class="color-dot" id="dot-amber" style="background-color: hsl(35, 92%, 43%);" onclick="selectThemeColor('amber')" title="アンバー"></span>
-            <span class="color-dot" id="dot-ocean" style="background-color: hsl(200, 95%, 39%);" onclick="selectThemeColor('ocean')" title="オーシャン"></span>
-            <span class="color-dot" id="dot-charcoal" style="background-color: hsl(217, 19%, 27%);" onclick="selectThemeColor('charcoal')" title="チャコール"></span>
-          </div>
-        </div>
-        
         <div class="card-footer-action">
           <button id="btn-save-config" class="btn btn-primary btn-glow" onclick="saveConfig()">
             <i class="fa-solid fa-floppy-disk"></i> 設定を保存
@@ -129,14 +113,27 @@
         </div>
       </div>
 
-      <!-- Advanced API & Model Settings -->
+      <!-- Advanced API, Model & Theme Settings -->
       <div class="card collapsible-card">
         <details>
           <summary class="collapsible-summary">
-            <span><i class="fa-solid fa-gears"></i> 詳細設定 (APIキー・AIモデル)</span>
+            <span><i class="fa-solid fa-gears"></i> 詳細設定 (テーマ・APIキー・AIモデル)</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
           </summary>
           <div class="collapsible-content">
+            <!-- Theme Color Picker -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label>テーマカラー</label>
+              <div class="theme-color-picker">
+                <span class="color-dot active" id="dot-indigo" style="background-color: hsl(243, 75%, 59%);" onclick="selectThemeColor('indigo')" title="インディゴ"></span>
+                <span class="color-dot" id="dot-emerald" style="background-color: hsl(162, 70%, 40%);" onclick="selectThemeColor('emerald')" title="エメラルド"></span>
+                <span class="color-dot" id="dot-rose" style="background-color: hsl(336, 74%, 50%);" onclick="selectThemeColor('rose')" title="ローズ"></span>
+                <span class="color-dot" id="dot-amber" style="background-color: hsl(35, 92%, 43%);" onclick="selectThemeColor('amber')" title="アンバー"></span>
+                <span class="color-dot" id="dot-ocean" style="background-color: hsl(200, 95%, 39%);" onclick="selectThemeColor('ocean')" title="オーシャン"></span>
+                <span class="color-dot" id="dot-charcoal" style="background-color: hsl(217, 19%, 27%);" onclick="selectThemeColor('charcoal')" title="チャコール"></span>
+              </div>
+            </div>
+
             <p class="section-desc">デフォルトではサーバー側の共有APIキーで動作します。ご自身のAPIキーやモデルを使用したい場合は以下を設定してください。</p>
             <div class="form-group">
               <label for="cfg-api-key">カスタム OpenRouter API キー (任意)</label>
