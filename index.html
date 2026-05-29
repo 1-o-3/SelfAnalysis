@@ -64,6 +64,18 @@
       </div>
       <h2>自己分析ヘルパー</h2>
       <p>自己分析エピソードや設定を安全に保存し、AIレポート生成機能を利用するには、Googleアカウントでのログインが必要です。</p>
+      
+      <!-- Custom Client ID Input -->
+      <div class="custom-client-id-box" style="margin-bottom: 1.5rem; text-align: left;">
+        <label for="custom-google-client-id" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">
+          Google クライアント ID (任意)
+        </label>
+        <input type="text" id="custom-google-client-id" placeholder="例: xxxxx.apps.googleusercontent.com" style="width: 100%; padding: 0.65rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem;" onchange="onCustomClientIdChange(this.value)">
+        <span class="input-helper-text" style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 0.3rem; line-height: 1.4;">
+          ※「認証エラー: origin_mismatch」が表示される場合、ご自身で作成したGoogle クライアント IDを入力してください。
+        </span>
+      </div>
+
       <div id="google-login-btn-large"></div>
     </div>
   </div>

@@ -96,6 +96,12 @@ window.addEventListener('DOMContentLoaded', () => {
     updateProfileUI();
     updateAuthUIState();
   }
+
+  // Populate custom google client ID input
+  const customClientIdInput = document.getElementById('custom-google-client-id');
+  if (customClientIdInput) {
+    customClientIdInput.value = localStorage.getItem('app_custom_google_client_id') || '';
+  }
   
   // Set up global modal close click handlers
   document.getElementById('profile-modal').addEventListener('click', (e) => {
@@ -110,7 +116,11 @@ async function initGoogleLogin() {
   try {
     const res = await fetch('/api/config');
     const config = await res.json();
-    googleClientId = config.googleClientId;
+    
+    // Use custom client ID if set by the user, otherwise fallback to the worker-provided default
+    const savedCustomClientId = localStorage.getItem('app_custom_google_client_id');
+    googleClientId = savedCustomClientId || config.googleClientId;
+    
     isKvEnabled = config.kvEnabled;
 
     if (window.google) {
@@ -124,6 +134,17 @@ async function initGoogleLogin() {
     console.error('Failed to load Google Sign-In config:', e);
   }
 }
+
+window.onCustomClientIdChange = function(value) {
+  const cleanValue = value.trim();
+  if (cleanValue) {
+    localStorage.setItem('app_custom_google_client_id', cleanValue);
+  } else {
+    localStorage.removeItem('app_custom_google_client_id');
+  }
+  // Re-initialize with the new client ID
+  initGoogleLogin();
+};
 
 function renderGoogleButton() {
   const container = document.getElementById("google-login-btn-large");
