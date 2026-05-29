@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
             if (req.url.startsWith('/api/config') && req.method === 'GET') {
               res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
               res.end(JSON.stringify({
-                googleClientId: env.GOOGLE_CLIENT_ID || '721724668570-nbkv1cfusk7kk4eni4pjvepaus73b13t.apps.googleusercontent.com',
+                googleClientId: env.GOOGLE_CLIENT_ID || '34103901665-i8jtjr8ai9aj60dfflgce0sq0mrivedc.apps.googleusercontent.com',
                 kvEnabled: true // Enable KV sync UI
               }));
               return;

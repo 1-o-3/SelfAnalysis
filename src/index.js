@@ -21,7 +21,7 @@ export default {
     // 1. GET /api/config
     if (url.pathname === '/api/config' && request.method === 'GET') {
       const responseData = {
-        googleClientId: env.GOOGLE_CLIENT_ID || '721724668570-nbkv1cfusk7kk4eni4pjvepaus73b13t.apps.googleusercontent.com',
+        googleClientId: env.GOOGLE_CLIENT_ID || '34103901665-i8jtjr8ai9aj60dfflgce0sq0mrivedc.apps.googleusercontent.com',
         kvEnabled: !!env.SELF_ANALYSIS_KV
       };
       return new Response(JSON.stringify(responseData), {
