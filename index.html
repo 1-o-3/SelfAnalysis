@@ -27,15 +27,12 @@
     
     <!-- Custom Profile Editor / Google Login -->
     <div class="user-profile-box-container">
-      <!-- Google Login Button Container -->
-      <div id="google-login-btn"></div>
-      
-      <!-- User profile when logged in (either via Google or Guest) -->
-      <div class="user-profile-box" id="profile-trigger" onclick="toggleProfileModal(true)">
-        <img id="display-user-avatar" class="user-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=student" alt="Avatar">
+      <!-- User profile when logged in (Only shown when logged in) -->
+      <div class="user-profile-box" id="profile-trigger" onclick="toggleProfileModal(true)" style="display: none;">
+        <img id="display-user-avatar" class="user-avatar-img" src="" alt="Avatar">
         <div class="profile-info-compact">
-          <span id="display-user-email" class="profile-email-text">guest@example.com</span>
-          <span id="profile-type-badge" class="profile-edit-label"><i class="fa-solid fa-user-pen"></i> ゲスト(編集)</span>
+          <span id="display-user-email" class="profile-email-text"></span>
+          <span id="profile-type-badge" class="profile-edit-label"></span>
         </div>
       </div>
 
@@ -47,7 +44,7 @@
   </header>
 
   <!-- Main Navigation Tabs -->
-  <nav class="tabs-nav">
+  <nav class="tabs-nav" id="main-nav" style="display: none;">
     <button id="tab-btn-data" class="tab-btn active" onclick="switchTab('tab-data')">
       <i class="fa-solid fa-database"></i> <span>① データ準備</span>
     </button>
@@ -59,7 +56,19 @@
     </button>
   </nav>
 
-  <main class="container">
+  <!-- Login Wall Container (Visible when not logged in) -->
+  <div id="login-wall" class="login-wall-container" style="display: none;">
+    <div class="login-wall-card">
+      <div class="login-wall-logo">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <h2>自己分析ヘルパー</h2>
+      <p>自己分析エピソードや設定を安全に保存し、AIレポート生成機能を利用するには、Googleアカウントでのログインが必要です。</p>
+      <div id="google-login-btn-large"></div>
+    </div>
+  </div>
+
+  <main class="container" id="main-content" style="display: none;">
     
     <!-- Tab 1: Data Preparation -->
     <section id="tab-data" class="tab-content active">

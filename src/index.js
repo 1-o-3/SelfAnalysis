@@ -143,7 +143,23 @@ async function verifyGoogleToken(idToken) {
 async function handleGenerateReport(request, env, corsHeaders) {
   try {
     const body = await request.json();
-    const { theme, limit, sauceText, users, feature, prompt, customApiKey, model } = body;
+    const { idToken, theme, limit, sauceText, users, feature, prompt, customApiKey, model } = body;
+
+    if (!idToken) {
+      return new Response(
+        JSON.stringify({ error: 'Googleログインによる認証が必要です。' }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
+
+    try {
+      await verifyGoogleToken(idToken);
+    } catch (err) {
+      return new Response(
+        JSON.stringify({ error: `認証エラー: ${err.message}` }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
 
     const apiKey = env.OPENROUTER_API_KEY || env.GLOBAL_API_KEY || customApiKey;
 

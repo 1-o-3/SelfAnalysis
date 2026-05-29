@@ -141,7 +141,21 @@ export default defineConfig(({ mode }) => {
               try {
                 const bodyStr = await getBody(req);
                 const data = JSON.parse(bodyStr);
-                const { theme, limit, sauceText, users, feature, prompt, customApiKey, model } = data;
+                const { idToken, theme, limit, sauceText, users, feature, prompt, customApiKey, model } = data;
+
+                if (!idToken) {
+                  res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+                  res.end(JSON.stringify({ error: 'Googleログイン認証が必要です。' }));
+                  return;
+                }
+
+                try {
+                  await verifyToken(idToken);
+                } catch (tokenErr) {
+                  res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+                  res.end(JSON.stringify({ error: `認証エラー: ${tokenErr.message}` }));
+                  return;
+                }
 
                 const apiKey = env.OPENROUTER_API_KEY || env.GLOBAL_API_KEY || customApiKey;
 

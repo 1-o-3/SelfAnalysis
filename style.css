@@ -1120,3 +1120,71 @@ details[open] .toggle-icon {
   }
 }
 
+/* --- Login Wall styles --- */
+.login-wall-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem 1.5rem;
+}
+
+.login-wall-card {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: tabFadeIn 0.4s ease;
+}
+
+.login-wall-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: var(--primary-gradient);
+}
+
+.login-wall-logo {
+  width: 64px;
+  height: 64px;
+  background: var(--primary-gradient);
+  color: #fff;
+  font-size: 2rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.login-wall-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: var(--text-main);
+}
+
+.login-wall-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+.login-wall-card #google-login-btn-large {
+  display: flex;
+  justify-content: center;
+}
+
+

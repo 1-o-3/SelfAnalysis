@@ -4,7 +4,9 @@
 let reportList = JSON.parse(localStorage.getItem('app_reports')) || [];
 let favoriteList = JSON.parse(localStorage.getItem('app_favorites')) || [];
 let sauceLibrary = JSON.parse(localStorage.getItem('app_sauces')) || [
-  { id: 's1', category: '基本情報', text: '・1998年生まれ\n・経済学部所属' }
+  { id: 's1', category: '基本情報', text: '・2005年生まれ\n・情報科学科所属' },
+  { id: 's2', category: '自己PR', text: '・プログラミングやシステム開発の講義に注力\n・論理的思考力と粘り強さが強み' },
+  { id: 's3', category: '学生時代頑張ったこと', text: '・競技プログラミングの学習に取り組み、アルゴリズムの理解を深めた' }
 ];
 
 // Profile configuration (Guest Mode backup)
@@ -17,8 +19,8 @@ let userProfile = JSON.parse(localStorage.getItem('app_user_profile')) || {
 const defaultRulePrompt = `【厳守する出力ルール】\n1. カッコや鍵カッコの横の空白、‐‐のようなAIらしい表記は一切使わない。\n2. 各段落の先頭（1文目）は、必ず全角スペース「　」を1マス分入れて字下げすること。\n3. 段落と段落の間には、空行（中身のない空白の行）を絶対に挟まない。改行（Shift+Enter）のみで次の段落へ繋ぐこと。\n\n【出力イメージ（お手本）】\n　私の長所は〜〜です。〜〜をしました。\n　また、私は〜〜です。〜〜から評価を受けました。\n　さらに、私は〜〜。`;
 
 let personaConfig = JSON.parse(localStorage.getItem('app_persona_config')) || {
-  users: '',
-  feature: '',
+  users: '情報科学科の大学生',
+  feature: 'プログラミングスキルと論理的アプローチ',
   prompt: defaultRulePrompt,
   customApiKey: '',
   model: 'openai/gpt-oss-120b:free',
@@ -92,6 +94,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadUserDataOnStart();
   } else {
     updateProfileUI();
+    updateAuthUIState();
   }
   
   // Set up global modal close click handlers
@@ -123,16 +126,16 @@ async function initGoogleLogin() {
 }
 
 function renderGoogleButton() {
-  const container = document.getElementById("google-login-btn");
+  const container = document.getElementById("google-login-btn-large");
   if (!container) return;
   
   if (googleToken) {
     container.style.display = "none";
   } else {
-    container.style.display = "block";
+    container.style.display = "flex";
     google.accounts.id.renderButton(
       container,
-      { theme: "outline", size: "medium", shape: "pill", text: "signin_with" }
+      { theme: "filled_blue", size: "large", shape: "pill", text: "signin_with" }
     );
   }
 }
@@ -181,6 +184,7 @@ async function handleCredentialResponse(response) {
     }
     
     updateProfileUI();
+    updateAuthUIState();
     renderGoogleButton();
     renderSauceLibrary();
     renderThemeHistory();
@@ -226,6 +230,7 @@ async function loadUserDataOnStart() {
       }
       
       updateProfileUI();
+      updateAuthUIState();
       renderGoogleButton();
       renderSauceLibrary();
       renderThemeHistory();
@@ -239,6 +244,7 @@ async function loadUserDataOnStart() {
     console.error('Failed to sync on load. Fallback to local cache.', e);
     // Server down/offline: fallback to local cache
     updateProfileUI();
+    updateAuthUIState();
     renderGoogleButton();
   }
 }
@@ -353,18 +359,38 @@ function updateProfileUI() {
   const btnLogout = document.getElementById('btn-logout');
 
   if (googleToken && googleProfile) {
-    displayAvatar.src = googleProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${googleProfile.email}`;
-    displayEmail.innerText = googleProfile.name || googleProfile.email;
-    displayAvatar.title = `Googleアカウント: ${googleProfile.email}`;
-    profileTypeBadge.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:var(--accent);"></i> クラウド保存中`;
-    btnLogout.style.display = 'block';
+    if (displayAvatar) displayAvatar.src = googleProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${googleProfile.email}`;
+    if (displayEmail) displayEmail.innerText = googleProfile.name || googleProfile.email;
+    if (displayAvatar) displayAvatar.title = `Googleアカウント: ${googleProfile.email}`;
+    if (profileTypeBadge) profileTypeBadge.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:var(--accent);"></i> クラウド保存中`;
+    if (btnLogout) btnLogout.style.display = 'block';
   } else {
-    const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile.avatarSeed}`;
-    displayAvatar.src = avatarUrl;
-    displayEmail.innerText = userProfile.email;
-    displayAvatar.title = `ゲスト: ${userProfile.email}`;
-    profileTypeBadge.innerHTML = `<i class="fa-solid fa-user-pen"></i> ゲスト(編集)`;
-    btnLogout.style.display = 'none';
+    if (displayAvatar) displayAvatar.src = '';
+    if (displayEmail) displayEmail.innerText = '';
+    if (profileTypeBadge) profileTypeBadge.innerHTML = '';
+    if (btnLogout) btnLogout.style.display = 'none';
+  }
+}
+
+function updateAuthUIState() {
+  const loginWall = document.getElementById('login-wall');
+  const mainNav = document.getElementById('main-nav');
+  const mainContent = document.getElementById('main-content');
+  const profileTrigger = document.getElementById('profile-trigger');
+  const btnLogout = document.getElementById('btn-logout');
+
+  if (googleToken) {
+    if (loginWall) loginWall.style.display = 'none';
+    if (mainNav) mainNav.style.display = 'flex';
+    if (mainContent) mainContent.style.display = 'block';
+    if (profileTrigger) profileTrigger.style.display = 'flex';
+    if (btnLogout) btnLogout.style.display = 'block';
+  } else {
+    if (loginWall) loginWall.style.display = 'flex';
+    if (mainNav) mainNav.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'none';
+    if (profileTrigger) profileTrigger.style.display = 'none';
+    if (btnLogout) btnLogout.style.display = 'none';
   }
 }
 
@@ -574,6 +600,7 @@ window.addAndGenerate = async function() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        idToken: googleToken,
         theme,
         limit,
         sauceText: combinedSauceText,
@@ -620,6 +647,7 @@ window.regenerate = async function(id) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        idToken: googleToken,
         theme: report.theme,
         limit: report.limit,
         sauceText: report.sauce,
