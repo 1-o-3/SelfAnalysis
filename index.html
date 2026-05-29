@@ -44,13 +44,16 @@
   <!-- Main Navigation Tabs -->
   <nav class="tabs-nav" id="main-nav" style="display: none;">
     <button id="tab-btn-data" class="tab-btn active" onclick="switchTab('tab-data')">
-      <i class="fa-solid fa-database"></i> <span>① データ準備</span>
+      <i class="fa-solid fa-pen-to-square"></i> <span>① 作成</span>
     </button>
     <button id="tab-btn-generate" class="tab-btn" onclick="switchTab('tab-generate')">
-      <i class="fa-solid fa-bolt"></i> <span>② レポート生成</span>
+      <i class="fa-solid fa-bolt"></i> <span>② 生成結果</span>
     </button>
     <button id="tab-btn-favorites" class="tab-btn" onclick="switchTab('tab-favorites')">
       <i class="fa-solid fa-star"></i> <span>③ お気に入り</span>
+    </button>
+    <button id="tab-btn-settings" class="tab-btn" onclick="switchTab('tab-settings')">
+      <i class="fa-solid fa-gear"></i> <span>④ 設定</span>
     </button>
   </nav>
 
@@ -81,78 +84,6 @@
     <!-- Tab 1: Data Preparation -->
     <section id="tab-data" class="tab-content active">
       
-      <!-- Persona Card -->
-      <div class="card card-gradient">
-        <div class="card-header">
-          <h3><i class="fa-solid fa-id-card"></i> あなたのペルソナ（個人設定）</h3>
-          <span class="badge badge-accent">AIのキャラクター決定</span>
-        </div>
-        <p class="section-desc">レポート作成者の立場やアピールしたい個性を入力し、文章のトーンを定義します。</p>
-        
-        <div class="grid-2col">
-          <div class="form-group">
-            <label for="cfg-users">私の立場</label>
-            <input type="text" id="cfg-users" placeholder="例: 情報科学科の大学生（2005年生まれ）">
-          </div>
-          <div class="form-group">
-            <label for="cfg-feature">自分に合う特徴</label>
-            <input type="text" id="cfg-feature" placeholder="例: プログラミングスキルと論理的アプローチ">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="cfg-prompt">追加プロンプト指令（出力スタイル・構成ルール）</label>
-          <textarea id="cfg-prompt" rows="6" placeholder="AIの執筆スタイルを指定します..."></textarea>
-        </div>
-
-        <div class="card-footer-action">
-          <button id="btn-save-config" class="btn btn-primary btn-glow" onclick="saveConfig()">
-            <i class="fa-solid fa-floppy-disk"></i> 設定を保存
-          </button>
-          <span id="cfg-status" class="status-msg"></span>
-        </div>
-      </div>
-
-      <!-- Advanced API, Model & Theme Settings -->
-      <div class="card collapsible-card">
-        <details>
-          <summary class="collapsible-summary">
-            <span><i class="fa-solid fa-gears"></i> 詳細設定 (テーマ・APIキー・AIモデル)</span>
-            <i class="fa-solid fa-chevron-down toggle-icon"></i>
-          </summary>
-          <div class="collapsible-content">
-            <!-- Theme Color Picker -->
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label>テーマカラー</label>
-              <div class="theme-color-picker">
-                <span class="color-dot active" id="dot-indigo" style="background-color: hsl(243, 75%, 59%);" onclick="selectThemeColor('indigo')" title="インディゴ"></span>
-                <span class="color-dot" id="dot-emerald" style="background-color: hsl(162, 70%, 40%);" onclick="selectThemeColor('emerald')" title="エメラルド"></span>
-                <span class="color-dot" id="dot-rose" style="background-color: hsl(336, 74%, 50%);" onclick="selectThemeColor('rose')" title="ローズ"></span>
-                <span class="color-dot" id="dot-amber" style="background-color: hsl(35, 92%, 43%);" onclick="selectThemeColor('amber')" title="アンバー"></span>
-                <span class="color-dot" id="dot-ocean" style="background-color: hsl(200, 95%, 39%);" onclick="selectThemeColor('ocean')" title="オーシャン"></span>
-                <span class="color-dot" id="dot-charcoal" style="background-color: hsl(217, 19%, 27%);" onclick="selectThemeColor('charcoal')" title="チャコール"></span>
-              </div>
-            </div>
-
-            <p class="section-desc">デフォルトではサーバー側の共有APIキーで動作します。ご自身のAPIキーやモデルを使用したい場合は以下を設定してください。</p>
-            <div class="form-group">
-              <label for="cfg-api-key">カスタム OpenRouter API キー (任意)</label>
-              <input type="password" id="cfg-api-key" placeholder="sk-or-v1-..." class="api-key-input">
-              <span class="input-helper-text">※入力するとブラウザの暗号化されたローカルストレージにのみ保存され、最優先で使用されます。</span>
-            </div>
-            <div class="form-group">
-              <label for="cfg-model">使用するAIモデル</label>
-              <select id="cfg-model">
-                <option value="openai/gpt-oss-120b:free">openai/gpt-oss-120b:free (標準・無料)</option>
-                <option value="meta-llama/llama-3-8b-instruct:free">meta-llama/llama-3-8b-instruct:free (無料)</option>
-                <option value="google/gemini-2.5-flash">google/gemini-2.5-flash (高速・推奨)</option>
-                <option value="deepseek/deepseek-chat">deepseek/deepseek-v3 (高度・有料キーのみ)</option>
-              </select>
-            </div>
-          </div>
-        </details>
-      </div>
-
       <!-- Sources Library Card -->
       <div class="card">
         <div class="card-header">
@@ -239,6 +170,86 @@
       </div>
       <div id="favorites-container">
         <!-- Dynamically populated via main.js -->
+      </div>
+    </section>
+
+    <!-- Tab 4: Settings -->
+    <section id="tab-settings" class="tab-content">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-gear"></i> アプリ・ペルソナ設定</h2>
+        <p class="section-desc">レポート作成者のペルソナ（立場や強み）や表示テーマ、APIモデル等を設定します。</p>
+      </div>
+      
+      <!-- Persona Card -->
+      <div class="card card-gradient">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-id-card"></i> あなたのペルソナ（個人設定）</h3>
+          <span class="badge badge-accent">AIのキャラクター決定</span>
+        </div>
+        <p class="section-desc">レポート作成者の立場やアピールしたい個性を入力し、文章のトーンを定義します。</p>
+        
+        <div class="grid-2col">
+          <div class="form-group">
+            <label for="cfg-users">私の立場</label>
+            <input type="text" id="cfg-users" placeholder="例: 情報科学科の大学生（2005年生まれ）">
+          </div>
+          <div class="form-group">
+            <label for="cfg-feature">自分に合う特徴</label>
+            <input type="text" id="cfg-feature" placeholder="例: プログラミングスキルと論理的アプローチ">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="cfg-prompt">追加プロンプト指令（出力スタイル・構成ルール）</label>
+          <textarea id="cfg-prompt" rows="6" placeholder="AIの執筆スタイルを指定します..."></textarea>
+        </div>
+        
+        <div class="card-footer-action">
+          <button id="btn-save-config" class="btn btn-primary btn-glow" onclick="saveConfig()">
+            <i class="fa-solid fa-floppy-disk"></i> 設定を保存
+          </button>
+          <span id="cfg-status" class="status-msg"></span>
+        </div>
+      </div>
+
+      <!-- Advanced API, Model & Theme Settings -->
+      <div class="card collapsible-card">
+        <details>
+          <summary class="collapsible-summary">
+            <span><i class="fa-solid fa-gears"></i> 詳細設定 (テーマ・APIキー・AIモデル)</span>
+            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+          </summary>
+          <div class="collapsible-content">
+            <!-- Theme Color Picker -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label>テーマカラー</label>
+              <div class="theme-color-picker">
+                <span class="color-dot active" id="dot-indigo" style="background-color: hsl(243, 75%, 59%);" onclick="selectThemeColor('indigo')" title="インディゴ"></span>
+                <span class="color-dot" id="dot-emerald" style="background-color: hsl(162, 70%, 40%);" onclick="selectThemeColor('emerald')" title="エメラルド"></span>
+                <span class="color-dot" id="dot-rose" style="background-color: hsl(336, 74%, 50%);" onclick="selectThemeColor('rose')" title="ローズ"></span>
+                <span class="color-dot" id="dot-amber" style="background-color: hsl(35, 92%, 43%);" onclick="selectThemeColor('amber')" title="アンバー"></span>
+                <span class="color-dot" id="dot-ocean" style="background-color: hsl(200, 95%, 39%);" onclick="selectThemeColor('ocean')" title="オーシャン"></span>
+                <span class="color-dot" id="dot-charcoal" style="background-color: hsl(217, 19%, 27%);" onclick="selectThemeColor('charcoal')" title="チャコール"></span>
+              </div>
+            </div>
+
+            <p class="section-desc">デフォルトではサーバー側の共有APIキーで動作します。ご自身のAPIキーやモデルを使用したい場合は以下を設定してください。</p>
+            <div class="form-group">
+              <label for="cfg-api-key">カスタム OpenRouter API キー (任意)</label>
+              <input type="password" id="cfg-api-key" placeholder="sk-or-v1-..." class="api-key-input">
+              <span class="input-helper-text">※入力するとブラウザの暗号化されたローカルストレージにのみ保存され、最優先で使用されます。</span>
+            </div>
+            <div class="form-group">
+              <label for="cfg-model">使用するAIモデル</label>
+              <select id="cfg-model">
+                <option value="openai/gpt-oss-120b:free">openai/gpt-oss-120b:free (標準・無料)</option>
+                <option value="meta-llama/llama-3-8b-instruct:free">meta-llama/llama-3-8b-instruct:free (無料)</option>
+                <option value="google/gemini-2.5-flash">google/gemini-2.5-flash (高速・推奨)</option>
+                <option value="deepseek/deepseek-chat">deepseek/deepseek-v3 (高度・有料キーのみ)</option>
+              </select>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 

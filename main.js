@@ -315,7 +315,8 @@ window.switchTab = function(tabId) {
   const tabButtonMap = {
     'tab-data': 'tab-btn-data',
     'tab-generate': 'tab-btn-generate',
-    'tab-favorites': 'tab-btn-favorites'
+    'tab-favorites': 'tab-btn-favorites',
+    'tab-settings': 'tab-btn-settings'
   };
   const activeBtnId = tabButtonMap[tabId];
   if (activeBtnId) {
