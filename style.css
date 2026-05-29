@@ -1005,3 +1005,118 @@ details[open] .toggle-icon {
     transform: scale(1.0);
   }
 }
+
+/* --- Theme Color Customizer --- */
+.theme-color-picker {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.color-dot:hover {
+  transform: scale(1.18);
+}
+
+.color-dot.active {
+  border-color: var(--text-main);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  transform: scale(1.1);
+}
+
+/* --- Desktop Layout Enhancements --- */
+@media (min-width: 768px) {
+  .sauce-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* --- Mobile Responsive Enhancements --- */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .app-logo {
+    justify-content: center;
+  }
+
+  .user-profile-box-container {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tabs-nav {
+    justify-content: space-around;
+    gap: 0.25rem;
+    padding: 0 0.25rem;
+  }
+
+  .tab-btn {
+    padding: 0.75rem 0.15rem;
+    font-size: 0.8rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-grow: 1;
+    justify-content: center;
+    text-align: center;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab-btn span {
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .container {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+  }
+
+  .grid-actions {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .grid-actions button {
+    width: 100%;
+  }
+
+  .compare-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .modal-card {
+    width: 92%;
+    padding: 1.25rem;
+  }
+
+  .avatar-select-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+}
+

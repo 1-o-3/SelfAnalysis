@@ -87,6 +87,18 @@
           <label for="cfg-prompt">追加プロンプト指令（出力スタイル・構成ルール）</label>
           <textarea id="cfg-prompt" rows="6" placeholder="AIの執筆スタイルを指定します..."></textarea>
         </div>
+
+        <div class="form-group">
+          <label>テーマカラー</label>
+          <div class="theme-color-picker">
+            <span class="color-dot active" id="dot-indigo" style="background-color: hsl(243, 75%, 59%);" onclick="selectThemeColor('indigo')" title="インディゴ"></span>
+            <span class="color-dot" id="dot-emerald" style="background-color: hsl(162, 70%, 40%);" onclick="selectThemeColor('emerald')" title="エメラルド"></span>
+            <span class="color-dot" id="dot-rose" style="background-color: hsl(336, 74%, 50%);" onclick="selectThemeColor('rose')" title="ローズ"></span>
+            <span class="color-dot" id="dot-amber" style="background-color: hsl(35, 92%, 43%);" onclick="selectThemeColor('amber')" title="アンバー"></span>
+            <span class="color-dot" id="dot-ocean" style="background-color: hsl(200, 95%, 39%);" onclick="selectThemeColor('ocean')" title="オーシャン"></span>
+            <span class="color-dot" id="dot-charcoal" style="background-color: hsl(217, 19%, 27%);" onclick="selectThemeColor('charcoal')" title="チャコール"></span>
+          </div>
+        </div>
         
         <div class="card-footer-action">
           <button id="btn-save-config" class="btn btn-primary btn-glow" onclick="saveConfig()">

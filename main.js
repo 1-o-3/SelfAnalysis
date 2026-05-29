@@ -21,7 +21,44 @@ let personaConfig = JSON.parse(localStorage.getItem('app_persona_config')) || {
   feature: '',
   prompt: defaultRulePrompt,
   customApiKey: '',
-  model: 'openai/gpt-oss-120b:free'
+  model: 'openai/gpt-oss-120b:free',
+  themeColor: 'indigo'
+};
+
+// Color Themes Configurations
+const themeSchemes = {
+  indigo: { h: 243, s: 75, l: 59 },
+  emerald: { h: 162, s: 70, l: 40 },
+  rose: { h: 336, s: 74, l: 50 },
+  amber: { h: 35, s: 92, l: 43 },
+  ocean: { h: 200, s: 95, l: 39 },
+  charcoal: { h: 217, s: 19, l: 27 }
+};
+
+function applyThemeColor(themeName) {
+  const scheme = themeSchemes[themeName] || themeSchemes.indigo;
+  const { h, s, l } = scheme;
+  
+  const root = document.documentElement;
+  root.style.setProperty('--primary', `hsl(${h}, ${s}%, ${l}%)`);
+  root.style.setProperty('--primary-hover', `hsl(${h}, ${s}%, ${l - 9}%)`);
+  root.style.setProperty('--primary-glow', `hsla(${h}, ${s}%, ${l}%, 0.15)`);
+  
+  const nextH = themeName === 'charcoal' ? h : h + 22;
+  root.style.setProperty('--primary-gradient', `linear-gradient(135deg, hsl(${h}, ${s}%, ${l}%) 0%, hsl(${nextH}, ${s}%, ${l}%) 100%)`);
+  root.style.setProperty('--primary-gradient-hover', `linear-gradient(135deg, hsl(${h}, ${s}%, ${l - 9}%) 0%, hsl(${nextH}, ${s}%, ${l - 9}%) 100%)`);
+
+  // Update active state in picker UI
+  document.querySelectorAll('.color-dot').forEach(dot => dot.classList.remove('active'));
+  const activeDot = document.getElementById(`dot-${themeName}`);
+  if (activeDot) activeDot.classList.add('active');
+}
+
+window.selectThemeColor = function(themeName) {
+  personaConfig.themeColor = themeName;
+  applyThemeColor(themeName);
+  localStorage.setItem('app_persona_config', JSON.stringify(personaConfig));
+  syncDataToCloud();
 };
 
 // Google Login States
@@ -38,6 +75,9 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cfg-prompt').value = personaConfig.prompt || defaultRulePrompt;
   document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
   document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
+
+  // Apply theme color
+  applyThemeColor(personaConfig.themeColor || 'indigo');
 
   // Initialize Lists
   renderSauceLibrary();
@@ -130,6 +170,8 @@ async function handleCredentialResponse(response) {
         document.getElementById('cfg-prompt').value = personaConfig.prompt || defaultRulePrompt;
         document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
         document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
+        
+        applyThemeColor(personaConfig.themeColor || 'indigo');
       }
       
       saveAllDataToLocal();
@@ -177,6 +219,8 @@ async function loadUserDataOnStart() {
           document.getElementById('cfg-prompt').value = personaConfig.prompt || defaultRulePrompt;
           document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
           document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
+          
+          applyThemeColor(personaConfig.themeColor || 'indigo');
         }
         saveAllDataToLocal();
       }
