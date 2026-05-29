@@ -1,10 +1,42 @@
-// Cloudflare Pages Function for secure server-side OpenRouter API communication.
-// Placed in /functions/api/generate-report.js to run on Cloudflare Workers edge network.
+// Cloudflare Workers with Assets entry point.
+// Routes API requests and serves frontend static assets.
 
-export async function onRequestPost(context) {
-  const { request, env } = context;
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
 
-  // Set CORS headers
+    // Handle the report generation API endpoint
+    if (url.pathname === '/api/generate-report') {
+      // Handle preflight CORS requests
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '86400'
+          }
+        });
+      }
+
+      if (request.method === 'POST') {
+        return handleGenerateReport(request, env);
+      }
+
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+
+    // Serve static files (HTML, CSS, JS) from the Vite build directory
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+};
+
+async function handleGenerateReport(request, env) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -16,14 +48,13 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const { theme, limit, sauceText, users, feature, prompt, customApiKey, model } = body;
 
-    // Retrieve API key from Cloudflare Pages Environment variables
-    // or fallback to customApiKey supplied by client in settings
+    // Retrieve API key from Workers environment variables or client-side settings
     const apiKey = env.OPENROUTER_API_KEY || env.GLOBAL_API_KEY || customApiKey;
 
     if (!apiKey) {
       return new Response(
         JSON.stringify({ 
-          error: 'APIキーが設定されていません。Cloudflareダッシュボードの環境変数で OPENROUTER_API_KEY を設定するか、またはアプリ上の「設定」からカスタムAPIキーを入力してください。' 
+          error: 'APIキーが設定されていません。Cloudflare Workersダッシュボードの環境変数で OPENROUTER_API_KEY を設定するか、またはアプリ上の「設定」からカスタムAPIキーを入力してください。' 
         }), 
         { status: 400, headers: corsHeaders }
       );
@@ -54,7 +85,7 @@ export async function onRequestPost(context) {
 
     const chosenModel = model || 'openai/gpt-oss-120b:free';
 
-    // Call OpenRouter API
+    // Fetch call to OpenRouter API
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -83,7 +114,6 @@ export async function onRequestPost(context) {
     let result = resData?.choices?.[0]?.message?.content ?? '';
 
     if (result) {
-      // Apply post-processing
       result = result.split('\n').filter(line => line.trim() !== "").join('\n');
       if (!result.startsWith('　')) result = '　' + result;
     }
@@ -98,17 +128,4 @@ export async function onRequestPost(context) {
       { status: 500, headers: corsHeaders }
     );
   }
-}
-
-// Handle CORS Preflight Options Request
-export async function onRequestOptions(context) {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Max-Age': '86400'
-    }
-  });
 }

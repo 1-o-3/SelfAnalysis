@@ -1,0 +1,8 @@
+name = "self-analysis"
+main = "src/index.js"
+compatibility_date = "2024-09-02"
+
+# Serve static assets from the Vite build directory
+[assets]
+directory = "./dist"
+binding = "ASSETS"
