@@ -112,6 +112,13 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* Custom User Profile Container & Login Button */
+.user-profile-box-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 /* Custom User Profile Box */
 .user-profile-box {
   display: flex;
@@ -128,6 +135,27 @@ body {
 .user-profile-box:hover {
   background-color: var(--border);
   border-color: var(--text-muted);
+}
+
+/* Google Logout Button Icon */
+.btn-logout-icon {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.btn-logout-icon:hover {
+  background-color: var(--danger-light);
+  transform: scale(1.1);
 }
 
 .user-avatar-img {

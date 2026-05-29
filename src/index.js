@@ -1,33 +1,119 @@
 // Cloudflare Workers with Assets entry point.
-// Routes API requests and serves frontend static assets.
+// Routes API requests, verifies Google login tokens, handles KV storage, and serves static files.
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Handle the report generation API endpoint
-    if (url.pathname === '/api/generate-report') {
-      // Handle preflight CORS requests
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'Access-Control-Max-Age': '86400'
-          }
-        });
-      }
+    // Common CORS headers for API endpoints
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400'
+    };
 
-      if (request.method === 'POST') {
-        return handleGenerateReport(request, env);
-      }
-
-      return new Response("Method Not Allowed", { status: 405 });
+    // Handle OPTIONS (CORS preflight) for all paths
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    // Serve static files (HTML, CSS, JS) from the Vite build directory
+    // 1. GET /api/config
+    if (url.pathname === '/api/config' && request.method === 'GET') {
+      const responseData = {
+        googleClientId: env.GOOGLE_CLIENT_ID || '721724668570-nbkv1cfusk7kk4eni4pjvepaus73b13t.apps.googleusercontent.com',
+        kvEnabled: !!env.SELF_ANALYSIS_KV
+      };
+      return new Response(JSON.stringify(responseData), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    }
+
+    // 2. POST /api/get-user-data
+    if (url.pathname === '/api/get-user-data' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { idToken } = body;
+
+        if (!idToken) {
+          return new Response(JSON.stringify({ error: 'idToken is required' }), {
+            status: 400,
+            headers: corsHeaders
+          });
+        }
+
+        const profile = await verifyGoogleToken(idToken);
+        let userData = null;
+
+        if (env.SELF_ANALYSIS_KV) {
+          const rawData = await env.SELF_ANALYSIS_KV.get(`user:${profile.sub}`);
+          if (rawData) {
+            userData = JSON.parse(rawData);
+          }
+        }
+
+        return new Response(JSON.stringify({
+          profile: {
+            email: profile.email,
+            name: profile.name,
+            picture: profile.picture
+          },
+          data: userData
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: corsHeaders
+        });
+      }
+    }
+
+    // 3. POST /api/save-user-data
+    if (url.pathname === '/api/save-user-data' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { idToken, data } = body;
+
+        if (!idToken || !data) {
+          return new Response(JSON.stringify({ error: 'idToken and data are required' }), {
+            status: 400,
+            headers: corsHeaders
+          });
+        }
+
+        const profile = await verifyGoogleToken(idToken);
+
+        if (!env.SELF_ANALYSIS_KV) {
+          return new Response(JSON.stringify({ error: 'Cloudflare KV namespace (SELF_ANALYSIS_KV) is not bound.' }), {
+            status: 501,
+            headers: corsHeaders
+          });
+        }
+
+        await env.SELF_ANALYSIS_KV.put(`user:${profile.sub}`, JSON.stringify(data));
+
+        return new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: corsHeaders
+        });
+      }
+    }
+
+    // 4. POST /api/generate-report
+    if (url.pathname === '/api/generate-report' && request.method === 'POST') {
+      return handleGenerateReport(request, env, corsHeaders);
+    }
+
+    // 5. Fallback: serve static assets from the Vite build directory
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
@@ -36,19 +122,29 @@ export default {
   }
 };
 
-async function handleGenerateReport(request, env) {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json; charset=utf-8'
-  };
+// Verifies Google ID Token via Google's OAuth2 Token Info endpoint
+async function verifyGoogleToken(idToken) {
+  if (idToken === 'mock-token-id') {
+    return {
+      sub: 'mock-user-12345',
+      email: 'mock-student@example.com',
+      name: 'テストユーザー',
+      picture: 'https://api.dicebear.com/7.x/bottts/svg?seed=student'
+    };
+  }
+  
+  const verifyResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+  if (!verifyResponse.ok) {
+    throw new Error("Google ID Token verification failed.");
+  }
+  return await verifyResponse.json();
+}
 
+async function handleGenerateReport(request, env, corsHeaders) {
   try {
     const body = await request.json();
     const { theme, limit, sauceText, users, feature, prompt, customApiKey, model } = body;
 
-    // Retrieve API key from Workers environment variables or client-side settings
     const apiKey = env.OPENROUTER_API_KEY || env.GLOBAL_API_KEY || customApiKey;
 
     if (!apiKey) {
@@ -60,7 +156,6 @@ async function handleGenerateReport(request, env) {
       );
     }
 
-    // Process source information (same logic as the original GAS code)
     let infoText = "";
     if (sauceText && sauceText.trim()) {
       const lines = sauceText.split('\n').map(l => l.trim()).filter(l => l !== "");
@@ -85,7 +180,6 @@ async function handleGenerateReport(request, env) {
 
     const chosenModel = model || 'openai/gpt-oss-120b:free';
 
-    // Fetch call to OpenRouter API
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {

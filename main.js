@@ -7,13 +7,13 @@ let sauceLibrary = JSON.parse(localStorage.getItem('app_sauces')) || [
   { id: 's1', category: '基本情報', text: '・1998年生まれ\n・経済学部所属' }
 ];
 
-// Profile configuration (Local replacement for Session.getActiveUser)
+// Profile configuration (Guest Mode backup)
 let userProfile = JSON.parse(localStorage.getItem('app_user_profile')) || {
   email: 'student@example.com',
   avatarSeed: 'student'
 };
 
-// Persona config (Local replacement for PropertiesService.getUserProperties)
+// Persona config (Local backup)
 const defaultRulePrompt = `【厳守する出力ルール】\n1. カッコや鍵カッコの横の空白、‐‐のようなAIらしい表記は一切使わない。\n2. 各段落の先頭（1文目）は、必ず全角スペース「　」を1マス分入れて字下げすること。\n3. 段落と段落の間には、空行（中身のない空白の行）を絶対に挟まない。改行（Shift+Enter）のみで次の段落へ繋ぐこと。\n\n【出力イメージ（お手本）】\n　私の長所は〜〜です。〜〜をしました。\n　また、私は〜〜です。〜〜から評価を受けました。\n　さらに、私は〜〜。`;
 
 let personaConfig = JSON.parse(localStorage.getItem('app_persona_config')) || {
@@ -24,6 +24,12 @@ let personaConfig = JSON.parse(localStorage.getItem('app_persona_config')) || {
   model: 'openai/gpt-oss-120b:free'
 };
 
+// Google Login States
+let googleToken = localStorage.getItem('app_google_token') || null;
+let googleProfile = null;
+let googleClientId = '';
+let isKvEnabled = false;
+
 // 2. Lifecycle Initialization
 window.addEventListener('DOMContentLoaded', () => {
   // Load configuration into form inputs
@@ -33,14 +39,20 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
   document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
 
-  // Apply visual profile details
-  updateProfileUI();
-
-  // Populate data lists
+  // Initialize Lists
   renderSauceLibrary();
   renderThemeHistory();
   renderResults();
   renderFavorites();
+
+  // Load API config and initialize Google Auth
+  initGoogleLogin();
+  
+  if (googleToken) {
+    loadUserDataOnStart();
+  } else {
+    updateProfileUI();
+  }
   
   // Set up global modal close click handlers
   document.getElementById('profile-modal').addEventListener('click', (e) => {
@@ -50,14 +62,185 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// 3. Tab Navigation
+// 3. Google Sign-In & Data Synchronization
+async function initGoogleLogin() {
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    googleClientId = config.googleClientId;
+    isKvEnabled = config.kvEnabled;
+
+    if (window.google) {
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleCredentialResponse
+      });
+      renderGoogleButton();
+    }
+  } catch (e) {
+    console.error('Failed to load Google Sign-In config:', e);
+  }
+}
+
+function renderGoogleButton() {
+  const container = document.getElementById("google-login-btn");
+  if (!container) return;
+  
+  if (googleToken) {
+    container.style.display = "none";
+  } else {
+    container.style.display = "block";
+    google.accounts.id.renderButton(
+      container,
+      { theme: "outline", size: "medium", shape: "pill", text: "signin_with" }
+    );
+  }
+}
+
+async function handleCredentialResponse(response) {
+  const token = response.credential;
+  googleToken = token;
+  localStorage.setItem('app_google_token', token);
+  
+  toggleLoader(true, "アカウント情報をロード中...");
+  try {
+    const res = await fetch('/api/get-user-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token })
+    });
+    
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+    
+    const resData = await res.json();
+    googleProfile = resData.profile;
+    
+    // If user has data stored in the Cloud KV, load it
+    if (resData.data && (resData.data.personaConfig || resData.data.sauceLibrary)) {
+      if (resData.data.reportList) reportList = resData.data.reportList;
+      if (resData.data.favoriteList) favoriteList = resData.data.favoriteList;
+      if (resData.data.sauceLibrary) sauceLibrary = resData.data.sauceLibrary;
+      if (resData.data.personaConfig) {
+        personaConfig = resData.data.personaConfig;
+        
+        document.getElementById('cfg-users').value = personaConfig.users || '';
+        document.getElementById('cfg-feature').value = personaConfig.feature || '';
+        document.getElementById('cfg-prompt').value = personaConfig.prompt || defaultRulePrompt;
+        document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
+        document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
+      }
+      
+      saveAllDataToLocal();
+    } else {
+      // First time Google login: sync current local storage data to the cloud KV!
+      await syncDataToCloud();
+    }
+    
+    updateProfileUI();
+    renderGoogleButton();
+    renderSauceLibrary();
+    renderThemeHistory();
+    renderResults();
+    renderFavorites();
+  } catch (err) {
+    alert("ログインに失敗しました: " + err.message);
+    googleLogout();
+  } finally {
+    toggleLoader(false);
+  }
+}
+
+async function loadUserDataOnStart() {
+  try {
+    const res = await fetch('/api/get-user-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: googleToken })
+    });
+    
+    if (res.ok) {
+      const resData = await res.json();
+      googleProfile = resData.profile;
+      
+      // Load cloud data if present
+      if (resData.data && (resData.data.personaConfig || resData.data.sauceLibrary)) {
+        if (resData.data.reportList) reportList = resData.data.reportList;
+        if (resData.data.favoriteList) favoriteList = resData.data.favoriteList;
+        if (resData.data.sauceLibrary) sauceLibrary = resData.data.sauceLibrary;
+        if (resData.data.personaConfig) {
+          personaConfig = resData.data.personaConfig;
+          
+          document.getElementById('cfg-users').value = personaConfig.users || '';
+          document.getElementById('cfg-feature').value = personaConfig.feature || '';
+          document.getElementById('cfg-prompt').value = personaConfig.prompt || defaultRulePrompt;
+          document.getElementById('cfg-api-key').value = personaConfig.customApiKey || '';
+          document.getElementById('cfg-model').value = personaConfig.model || 'openai/gpt-oss-120b:free';
+        }
+        saveAllDataToLocal();
+      }
+      
+      updateProfileUI();
+      renderGoogleButton();
+      renderSauceLibrary();
+      renderThemeHistory();
+      renderResults();
+      renderFavorites();
+    } else {
+      // Token invalid or expired
+      googleLogout();
+    }
+  } catch (e) {
+    console.error('Failed to sync on load. Fallback to local cache.', e);
+    // Server down/offline: fallback to local cache
+    updateProfileUI();
+    renderGoogleButton();
+  }
+}
+
+async function syncDataToCloud() {
+  if (!googleToken || !isKvEnabled) return;
+  try {
+    await fetch('/api/save-user-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idToken: googleToken,
+        data: {
+          personaConfig,
+          sauceLibrary,
+          reportList,
+          favoriteList
+        }
+      })
+    });
+  } catch (e) {
+    console.error('Failed to sync data to Cloudflare KV:', e);
+  }
+}
+
+function saveAllDataToLocal() {
+  localStorage.setItem('app_reports', JSON.stringify(reportList));
+  localStorage.setItem('app_favorites', JSON.stringify(favoriteList));
+  localStorage.setItem('app_sauces', JSON.stringify(sauceLibrary));
+  localStorage.setItem('app_persona_config', JSON.stringify(personaConfig));
+}
+
+window.googleLogout = function() {
+  googleToken = null;
+  googleProfile = null;
+  localStorage.removeItem('app_google_token');
+  window.location.reload(); // Reload to clear all states cleanly
+};
+
+// 4. Tab Navigation
 window.switchTab = function(tabId) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   
   document.getElementById(tabId).classList.add('active');
   
-  // Active state styling for tabs
   const tabButtonMap = {
     'tab-data': 'tab-btn-data',
     'tab-generate': 'tab-btn-generate',
@@ -68,20 +251,22 @@ window.switchTab = function(tabId) {
     document.getElementById(activeBtnId).classList.add('active');
   }
 
-  // Refresh lists if relevant
   if (tabId === 'tab-generate') renderResults();
   if (tabId === 'tab-favorites') renderFavorites();
   if (tabId === 'tab-data') renderThemeHistory();
 };
 
-// 4. Profile Management Functions
+// 5. Profile Management (Guest Mode settings)
 window.toggleProfileModal = function(show) {
+  if (googleToken && googleProfile) {
+    alert("Googleアカウント連携中はプロフィールを直接編集できません。Googleのプロフィール画像が自動で反映されます。");
+    return;
+  }
   const modal = document.getElementById('profile-modal');
   if (show) {
     document.getElementById('edit-email').value = userProfile.email;
     document.getElementById('edit-avatar-seed').value = userProfile.avatarSeed;
     
-    // Set active avatar thumbnail highlights
     document.querySelectorAll('.avatar-option').forEach(img => {
       img.classList.remove('active');
       if (img.getAttribute('onclick').includes(userProfile.avatarSeed)) {
@@ -118,13 +303,28 @@ window.saveProfileChanges = function() {
 };
 
 function updateProfileUI() {
-  const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile.avatarSeed}`;
-  document.getElementById('display-user-avatar').src = avatarUrl;
-  document.getElementById('display-user-email').innerText = userProfile.email;
-  document.getElementById('display-user-avatar').title = `アカウント: ${userProfile.email}`;
+  const displayAvatar = document.getElementById('display-user-avatar');
+  const displayEmail = document.getElementById('display-user-email');
+  const profileTypeBadge = document.getElementById('profile-type-badge');
+  const btnLogout = document.getElementById('btn-logout');
+
+  if (googleToken && googleProfile) {
+    displayAvatar.src = googleProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${googleProfile.email}`;
+    displayEmail.innerText = googleProfile.name || googleProfile.email;
+    displayAvatar.title = `Googleアカウント: ${googleProfile.email}`;
+    profileTypeBadge.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:var(--accent);"></i> クラウド保存中`;
+    btnLogout.style.display = 'block';
+  } else {
+    const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile.avatarSeed}`;
+    displayAvatar.src = avatarUrl;
+    displayEmail.innerText = userProfile.email;
+    displayAvatar.title = `ゲスト: ${userProfile.email}`;
+    profileTypeBadge.innerHTML = `<i class="fa-solid fa-user-pen"></i> ゲスト(編集)`;
+    btnLogout.style.display = 'none';
+  }
 }
 
-// 5. Persona / Configuration
+// 6. Persona / Configuration
 window.saveConfig = function() {
   const status = document.getElementById('cfg-status');
   status.innerText = "保存中...";
@@ -137,16 +337,19 @@ window.saveConfig = function() {
   personaConfig.model = document.getElementById('cfg-model').value;
 
   localStorage.setItem('app_persona_config', JSON.stringify(personaConfig));
+  
+  // Sync to Cloud KV
+  syncDataToCloud();
 
   setTimeout(() => {
-    status.innerText = "設定をローカルに保存しました！";
+    status.innerText = "設定を保存しました！";
     setTimeout(() => {
       status.style.opacity = '0';
     }, 2000);
   }, 500);
 };
 
-// 6. Source Information (Sauce) Management
+// 7. Source Information (Sauce) Management
 window.renderSauceLibrary = function() {
   const libContainer = document.getElementById('sauce-library-container');
   if (sauceLibrary.length === 0) {
@@ -245,9 +448,10 @@ window.deleteSauceItem = function(id) {
 
 function saveSauceData() {
   localStorage.setItem('app_sauces', JSON.stringify(sauceLibrary));
+  syncDataToCloud();
 }
 
-// 7. Theme History
+// 8. Theme History
 window.renderThemeHistory = function() {
   const container = document.getElementById('theme-history-list');
   if (reportList.length === 0) {
@@ -266,7 +470,7 @@ window.setThemeFromHistory = function(themeText) {
   document.getElementById('input-theme').value = themeText;
 };
 
-// 8. Report Generation & Server Interactivity
+// 9. Report Generation & Server Interactivity
 window.toggleLoader = function(show, message = "処理中...") {
   const loader = document.getElementById('global-loader');
   const msgEl = document.getElementById('loader-message');
@@ -292,7 +496,6 @@ window.addAndGenerate = async function() {
     document.getElementById('input-limit').value = "200";
   }
 
-  // Get selected sources Text
   const checkedBoxes = document.querySelectorAll('input[name="selected-sauces"]:checked');
   let combinedSauceText = "";
   checkedBoxes.forEach(box => {
@@ -440,6 +643,7 @@ window.toggleFavorite = function(id, encodedText, theme) {
     favoriteList.push({ id, text, theme, date: new Date().toLocaleDateString() });
   }
   localStorage.setItem('app_favorites', JSON.stringify(favoriteList));
+  syncDataToCloud();
   renderResults();
 };
 
@@ -453,7 +657,6 @@ window.deleteReport = function(id) {
 
 window.copyToClipboard = function(text) {
   if (!navigator.clipboard) {
-    // Fallback
     const t = document.createElement("textarea");
     document.body.appendChild(t);
     t.value = text;
@@ -470,9 +673,10 @@ window.copyToClipboard = function(text) {
 
 function saveData() {
   localStorage.setItem('app_reports', JSON.stringify(reportList));
+  syncDataToCloud();
 }
 
-// 9. Render Interface
+// 10. Render Interface
 window.renderResults = function() {
   const container = document.getElementById('generation-container');
   if (reportList.length === 0) {
@@ -492,7 +696,6 @@ window.renderResults = function() {
     let compareBlock = "";
     if (r.isComparing && hasHistory && !r.currentText.includes("再生成中...") && !r.currentText.includes("エラー")) {
       const oldText = r.history[r.history.length - 1];
-      const oldEncoded = btoa(encodeURIComponent(oldText));
       compareBlock = `
         <div class="compare-container">
           <div class="compare-box" onclick="selectText('${r.id}', 'old')">
@@ -565,7 +768,7 @@ window.renderFavorites = function() {
   }).join('');
 };
 
-// 10. Sanitization Helpers
+// 11. Sanitization Helpers
 function escapeHTML(str) {
   if (!str) return '';
   return str.replace(/[&<>'"]/g, 

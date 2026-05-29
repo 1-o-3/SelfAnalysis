@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/style.css">
+  <!-- Google Identity Services (GIS) for Google Login -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -23,13 +25,24 @@
       <span class="app-title-text">AIレポート生成スタンド</span>
     </div>
     
-    <!-- Custom Profile Editor -->
-    <div class="user-profile-box" id="profile-trigger" onclick="toggleProfileModal(true)">
-      <img id="display-user-avatar" class="user-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=student" alt="Avatar">
-      <div class="profile-info-compact">
-        <span id="display-user-email" class="profile-email-text">guest@example.com</span>
-        <span class="profile-edit-label"><i class="fa-solid fa-pen-to-square"></i> プロフィール編集</span>
+    <!-- Custom Profile Editor / Google Login -->
+    <div class="user-profile-box-container">
+      <!-- Google Login Button Container -->
+      <div id="google-login-btn"></div>
+      
+      <!-- User profile when logged in (either via Google or Guest) -->
+      <div class="user-profile-box" id="profile-trigger" onclick="toggleProfileModal(true)">
+        <img id="display-user-avatar" class="user-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=student" alt="Avatar">
+        <div class="profile-info-compact">
+          <span id="display-user-email" class="profile-email-text">guest@example.com</span>
+          <span id="profile-type-badge" class="profile-edit-label"><i class="fa-solid fa-user-pen"></i> ゲスト(編集)</span>
+        </div>
       </div>
+
+      <!-- Logout Button (Shown when logged in with Google) -->
+      <button id="btn-logout" class="btn-logout-icon" onclick="googleLogout()" style="display: none;" title="Googleログアウト">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
     </div>
   </header>
 
