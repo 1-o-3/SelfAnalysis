@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIレポート生成スタンド</title>
+  <!-- Google Fonts & Font Awesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon-glow">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <span class="app-title-text">AIレポート生成スタンド</span>
+    </div>
+    
+    <!-- Custom Profile Editor -->
+    <div class="user-profile-box" id="profile-trigger" onclick="toggleProfileModal(true)">
+      <img id="display-user-avatar" class="user-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=student" alt="Avatar">
+      <div class="profile-info-compact">
+        <span id="display-user-email" class="profile-email-text">guest@example.com</span>
+        <span class="profile-edit-label"><i class="fa-solid fa-pen-to-square"></i> プロフィール編集</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Navigation Tabs -->
+  <nav class="tabs-nav">
+    <button id="tab-btn-data" class="tab-btn active" onclick="switchTab('tab-data')">
+      <i class="fa-solid fa-database"></i> <span>① データ準備</span>
+    </button>
+    <button id="tab-btn-generate" class="tab-btn" onclick="switchTab('tab-generate')">
+      <i class="fa-solid fa-bolt"></i> <span>② レポート生成</span>
+    </button>
+    <button id="tab-btn-favorites" class="tab-btn" onclick="switchTab('tab-favorites')">
+      <i class="fa-solid fa-star"></i> <span>③ お気に入り</span>
+    </button>
+  </nav>
+
+  <main class="container">
+    
+    <!-- Tab 1: Data Preparation -->
+    <section id="tab-data" class="tab-content active">
+      
+      <!-- Persona Card -->
+      <div class="card card-gradient">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-id-card"></i> あなたのペルソナ（個人設定）</h3>
+          <span class="badge badge-accent">AIのキャラクター決定</span>
+        </div>
+        <p class="section-desc">レポート作成者の立場やアピールしたい個性を入力し、文章のトーンを定義します。</p>
+        
+        <div class="grid-2col">
+          <div class="form-group">
+            <label for="cfg-users">私の立場</label>
+            <input type="text" id="cfg-users" placeholder="例: 心理学専攻の大学生">
+          </div>
+          <div class="form-group">
+            <label for="cfg-feature">自分に合う特徴</label>
+            <input type="text" id="cfg-feature" placeholder="例: 論理的思考力と観察眼">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="cfg-prompt">追加プロンプト指令（出力スタイル・構成ルール）</label>
+          <textarea id="cfg-prompt" rows="6" placeholder="AIの執筆スタイルを指定します..."></textarea>
+        </div>
+        
+        <div class="card-footer-action">
+          <button id="btn-save-config" class="btn btn-primary btn-glow" onclick="saveConfig()">
+            <i class="fa-solid fa-floppy-disk"></i> 設定を保存
+          </button>
+          <span id="cfg-status" class="status-msg"></span>
+        </div>
+      </div>
+
+      <!-- Advanced API & Model Settings -->
+      <div class="card collapsible-card">
+        <details>
+          <summary class="collapsible-summary">
+            <span><i class="fa-solid fa-gears"></i> 詳細設定 (APIキー・AIモデル)</span>
+            <i class="fa-solid fa-chevron-down toggle-icon"></i>
+          </summary>
+          <div class="collapsible-content">
+            <p class="section-desc">デフォルトではサーバー側の共有APIキーで動作します。ご自身のAPIキーやモデルを使用したい場合は以下を設定してください。</p>
+            <div class="form-group">
+              <label for="cfg-api-key">カスタム OpenRouter API キー (任意)</label>
+              <input type="password" id="cfg-api-key" placeholder="sk-or-v1-..." class="api-key-input">
+              <span class="input-helper-text">※入力するとブラウザの暗号化されたローカルストレージにのみ保存され、最優先で使用されます。</span>
+            </div>
+            <div class="form-group">
+              <label for="cfg-model">使用するAIモデル</label>
+              <select id="cfg-model">
+                <option value="openai/gpt-oss-120b:free">openai/gpt-oss-120b:free (標準・無料)</option>
+                <option value="meta-llama/llama-3-8b-instruct:free">meta-llama/llama-3-8b-instruct:free (無料)</option>
+                <option value="google/gemini-2.5-flash">google/gemini-2.5-flash (高速・推奨)</option>
+                <option value="deepseek/deepseek-chat">deepseek/deepseek-v3 (高度・有料キーのみ)</option>
+              </select>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Sources Library Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-box-archive"></i> ソース情報（sauce）のストック管理</h3>
+          <span class="badge">エピソード一覧</span>
+        </div>
+        <p class="section-desc">自己分析データ、過去の経験談、資格などのエピソードをカテゴリ別に保存しておけます。レポート生成時に複数選択して組み合わせることができます。</p>
+        
+        <div class="sauce-manager-panel">
+          <h4 class="sub-section-title"><i class="fa-solid fa-plus"></i> 新しいカテゴリと情報の追加</h4>
+          <div class="grid-actions">
+            <input type="text" id="new-sauce-cat" placeholder="例: 自己PR、学生時代頑張ったこと、資格" class="cat-input">
+            <button id="btn-add-cat-only" class="btn btn-secondary" onclick="addNewCategoryOnly()">
+              カテゴリ枠のみ作成
+            </button>
+          </div>
+          <textarea id="new-sauce-text" placeholder="ここに具体的なエピソードデータを箇条書きや文章で入力してください。" rows="3"></textarea>
+          <button id="btn-save-sauce" class="btn btn-primary" onclick="addSauceItem()">
+            <i class="fa-solid fa-plus-circle"></i> ストックに保存する
+          </button>
+        </div>
+
+        <h4 class="sub-section-title"><i class="fa-solid fa-list"></i> 保存済みのソース一覧</h4>
+        <div id="sauce-library-container" class="sauce-grid">
+          <!-- Dynamically populated via main.js -->
+        </div>
+      </div>
+
+      <!-- Report Generation Form -->
+      <div class="card card-action-accent">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-pen-nib"></i> 課題レポートの作成実行</h3>
+          <span class="badge badge-primary">生成フォーム</span>
+        </div>
+        
+        <div class="form-group">
+          <label><i class="fa-solid fa-clock-rotate-left"></i> これまで使ったテーマ (履歴から自動入力)</label>
+          <div id="theme-history-list" class="theme-history-box">
+            <!-- Dynamically populated via main.js -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-theme">【必須】レポートの質問 / テーマ</label>
+          <input type="text" id="input-theme" placeholder="例: 大学生活で最も困難を乗り越えたエピソードについて">
+        </div>
+        
+        <div class="form-group-inline">
+          <div class="form-group w-50">
+            <label for="input-limit">文字数制限 (未入力時は200字)</label>
+            <input type="number" id="input-limit" placeholder="例: 400" min="50" max="2000">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>AIに参考にさせるソース情報 (複数選択可)</label>
+          <div id="sauce-selector" class="checkbox-group">
+            <!-- Dynamically populated via main.js -->
+          </div>
+        </div>
+        
+        <button id="btn-generate-report" class="btn btn-primary btn-large btn-glow-gradient" onclick="addAndGenerate()">
+          <i class="fa-solid fa-paper-plane"></i> 選択したソースを元にレポートを生成する
+        </button>
+      </div>
+    </section>
+
+    <!-- Tab 2: Generation Results -->
+    <section id="tab-generate" class="tab-content">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-bolt"></i> 生成結果・編集比較</h2>
+        <p class="section-desc">生成されたレポート結果を表示します。再生成を行った場合は前後の文章を左右で比較可能です。</p>
+      </div>
+      <div id="generation-container">
+        <!-- Dynamically populated via main.js -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Saved Favorites -->
+    <section id="tab-favorites" class="tab-content">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-star"></i> 保存済みのお気に入り</h2>
+        <p class="section-desc">気に入った生成結果をここへ保存していつでも確認・コピーできます。(ブラウザに保存されます)</p>
+      </div>
+      <div id="favorites-container">
+        <!-- Dynamically populated via main.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Profile Edit Modal -->
+  <div id="profile-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-gear"></i> プロフィールの編集</h3>
+        <button class="modal-close-btn" onclick="toggleProfileModal(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">アプリ上の表示アイコンとメールアドレスを設定できます。（個人PCでの識別用）</p>
+        
+        <div class="form-group">
+          <label>プロフィールアイコン</label>
+          <div class="avatar-select-grid">
+            <img class="avatar-option active" src="https://api.dicebear.com/7.x/bottts/svg?seed=student" onclick="selectAvatarOption(this, 'student')" alt="avatar1">
+            <img class="avatar-option" src="https://api.dicebear.com/7.x/bottts/svg?seed=writer" onclick="selectAvatarOption(this, 'writer')" alt="avatar2">
+            <img class="avatar-option" src="https://api.dicebear.com/7.x/bottts/svg?seed=coder" onclick="selectAvatarOption(this, 'coder')" alt="avatar3">
+            <img class="avatar-option" src="https://api.dicebear.com/7.x/bottts/svg?seed=academic" onclick="selectAvatarOption(this, 'academic')" alt="avatar4">
+            <img class="avatar-option" src="https://api.dicebear.com/7.x/bottts/svg?seed=spark" onclick="selectAvatarOption(this, 'spark')" alt="avatar5">
+            <img class="avatar-option" src="https://api.dicebear.com/7.x/bottts/svg?seed=nerd" onclick="selectAvatarOption(this, 'nerd')" alt="avatar6">
+          </div>
+          <input type="hidden" id="edit-avatar-seed" value="student">
+        </div>
+
+        <div class="form-group">
+          <label for="edit-email">メールアドレス (表示用)</label>
+          <input type="email" id="edit-email" placeholder="student@example.com">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="toggleProfileModal(false)">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveProfileChanges()">設定を反映</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="global-loader" class="loader-overlay">
+    <div class="loader-content">
+      <div class="spinner">
+        <div class="double-bounce1"></div>
+        <div class="double-bounce2"></div>
+      </div>
+      <p id="loader-message">レポートを生成中...</p>
+    </div>
+  </div>
+
+  <footer class="app-footer-info">
+    <p>AIレポート生成スタンド © 2026 / Vercel & Cloudflare 移植版</p>
+  </footer>
+
+  <script src="/main.js" type="module"></script>
+</body>
+</html>
